@@ -67,6 +67,16 @@ y_pred = clf.predict(X_test)
 accuracy = accuracy_score(y_test, y_pred)
 print(f'\nAccuracy: {accuracy * 100:.2f}%')
 
+corr = df[feature_names].corr() # pearson correlation coefficient matrix
+
+plt.figure(figsize=(14, 12)) 
+sns.heatmap(corr, annot=True, fmt='.2f', cmap='coolwarm', center=0, annot_kws={'size': 10}, linewidths=0.5, square=True)
+plt.xticks(rotation=45, ha='right', fontsize=11) 
+plt.yticks(rotation=0, fontsize=11) 
+plt.tight_layout()
+plt.savefig('correlation_matrix.png')
+plt.show()
+
 conf = confusion_matrix(y_test, y_pred, labels=range(len(target_names)))
 
 plt.figure(figsize=(8, 6))
@@ -85,4 +95,5 @@ plt.barh([feature_names[i] for i in sorted_idx], feature_importances[sorted_idx]
 plt.xlabel('Feature Importance')
 plt.tight_layout()
 plt.savefig('feature_importance.png')
+
 plt.show()
