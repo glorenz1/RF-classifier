@@ -15,6 +15,8 @@ def classify_chip(row):
         return 'open bumps'
     elif row['dead'] > 600 or row['fiterror'] > 1000:
         return 'tuning problems'
+    elif row['masked'] > 200:
+        return 'readout problems'
     else:
         return 'working good'
 
@@ -30,7 +32,7 @@ le = LabelEncoder()
 le.classes_ = np.array(target_names)
 y = le.transform(df['label'])
 
-feature_names = [
+features = [
     'I digital [mA]',
     'analog [mA]',
     'thr_entries',
@@ -47,7 +49,7 @@ feature_names = [
     'dead from start',
 ]
 
-X = df[feature_names].values
+X = df[features].values
 
 # train / test split
 X_train, X_test, y_train, y_test = train_test_split(
@@ -67,15 +69,16 @@ y_pred = clf.predict(X_test)
 accuracy = accuracy_score(y_test, y_pred)
 print(f'\nAccuracy: {accuracy * 100:.2f}%')
 
-corr = df[feature_names].corr() # pearson correlation coefficient matrix
+corr = df[features].corr() # pearson correlation coefficient matrix
+mask = np.triu(np.ones_like(corr, dtype=bool), k=1)
 
 plt.figure(figsize=(14, 12)) 
-sns.heatmap(corr, annot=True, fmt='.2f', cmap='coolwarm', center=0, annot_kws={'size': 10}, linewidths=0.5, square=True)
+sns.heatmap(corr, mask=mask, annot=True, fmt='.2f', cmap='coolwarm', center=0, vmin=-1, vmax=1, annot_kws={'size': 10}, linewidths=0.5, square=True)
 plt.xticks(rotation=45, ha='right', fontsize=11) 
 plt.yticks(rotation=0, fontsize=11) 
 plt.tight_layout()
 plt.savefig('correlation_matrix.png')
-plt.show()
+plt.close()
 
 conf = confusion_matrix(y_test, y_pred, labels=range(len(target_names)))
 
@@ -85,15 +88,14 @@ plt.xlabel('Predicted Labels')
 plt.ylabel('True Labels')
 plt.tight_layout()
 plt.savefig('confusion_matrix.png')
-plt.show()
+plt.close()
 
 feature_importances = clf.feature_importances_
 sorted_idx = feature_importances.argsort()
 
 plt.figure(figsize=(10, 6))
-plt.barh([feature_names[i] for i in sorted_idx], feature_importances[sorted_idx])
+plt.barh([features[i] for i in sorted_idx], feature_importances[sorted_idx])
 plt.xlabel('Feature Importance')
 plt.tight_layout()
 plt.savefig('feature_importance.png')
-
-plt.show()
+plt.close()
